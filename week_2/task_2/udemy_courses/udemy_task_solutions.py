@@ -1,25 +1,36 @@
-# #### data: udemy_courses.json
-# #### questions: udemy_questions.docx
-# #### notebook: udemy_task_solutions.ipynb
-# #### python file: udemy_task_solutions.py
+# data: udemy_courses.json
+# questions: udemy_questions.docx
+# notebook: udemy_task_solutions.ipynb
+# python file: udemy_task_solutions.py
 
-# At first, create a spark application, read the json file into a dataframe, and explore the data
 
+#import necessary libraries and functions
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StringType, FloatType, IntegerType, BooleanType, TimestampType
+import pyspark.sql.functions as f
+from pyspark.sql.functions import col, rank, max, min, asc, desc, collect_list, collect_set
+from pyspark.sql import Window as W 
 
-spark = SparkSession.builder.appName("udemy").getOrCreate()
-
+# create a spark application, read the json file into a dataframe, and explore the data
+spark = SparkSession.builder.appName('udemy')\
+    .config('spark.driver.extraClassPath', '/usr/lib/jvm/java-11-openjdk-amd64/lib/postgresql-42.5.0.jar')\
+    .getOrCreate()
 
 # read the udemy_courses.json file
 udemy_df = spark.read.format('json').load('udemy_courses.json')
 
-
 #view the data in the dataframe
 udemy_df.show(10)
 
+#
+udemy_df\
+    .write\
+    .mode('overwrite')\
+    .jdbc("jdbc:postgresql:spark", "public.udemy",
+        properties={"user": "postgres", "password": ""})
+
 
 #removing corrupt record column
-
 udemy_df = udemy_df.drop('_corrupt_record')
 
 
@@ -27,13 +38,7 @@ udemy_df = udemy_df.drop('_corrupt_record')
 udemy_df.printSchema()
 
 
-
 #all columns have data type string. So, we need to convert the datatypes using cast method
-
-from pyspark.sql.types import StringType, FloatType, IntegerType, BooleanType, TimestampType
-from pyspark.sql.functions import col
-
-
 udemy_df = udemy_df\
             .withColumn('content_duration', col('content_duration').cast(FloatType()))\
             .withColumn('course_id', col('course_id').cast(IntegerType()))\
@@ -48,9 +53,7 @@ udemy_df = udemy_df\
             .withColumn('subject', col('subject').cast(StringType()))\
             .withColumn('url', col('url').cast(StringType()))
 
-
 udemy_df.printSchema()
-
 
 udemy_df.show()
 
@@ -69,7 +72,6 @@ course_df = course_df.drop_duplicates()
 
 
 #create SQL table from dataframe
-
 udemy_df.createOrReplaceTempView("udemy_table")
 course_df.createOrReplaceTempView("course_table")
 
@@ -86,9 +88,6 @@ free_courses_df= course_df.filter(course_df.is_paid == "False")
 
 # free_courses_df.show()
 # free_courses_df.printSchema()
-
-from pyspark.sql.functions import rank, max, desc, collect_list
-from pyspark.sql import Window as W 
 
 
 best_free_courses_df = free_courses_df\
@@ -138,9 +137,6 @@ popular_courses.show()
 
 
 #dfway
-
-from pyspark.sql.functions import desc
-
 popular_courses_df = course_df.select(col('course_title').alias("Course_Titles"),\
                                       col('num_subscribers').alias("Number_of_Subscribers"))\
                                       .orderBy(desc(col("num_subscribers")))
@@ -226,9 +222,6 @@ titles_subjects_df = course_df.select(col('subject'), col('course_title'))\
 
 
 #dfway 2
-
-from pyspark.sql.functions import collect_set
-
 window_spec = W.partitionBy('subject')
 course_relation_df = course_df\
                 .withColumn('Course List', collect_set('course_title').over(window_spec))\
@@ -241,8 +234,6 @@ course_relation_df.show()
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 # ###  5. Which courses offer the best cost benefit?
-
-import pyspark.sql.functions as f
 
 #Assumption 1: course having price less than 100, reviews more than 5000, and subscribers more than 50000 
 #offer the best cost benefit
@@ -268,8 +259,6 @@ more_duration_less_price_courses.show(10)
 
 
 #dfway
-from pyspark.sql.functions import asc
-
 course_df.orderBy(desc('content_duration'), asc('price')).select('course_title', 'content_duration', 'price').show()
 
 # ---------------------------------------------------------------------------------------------------------------------------------
@@ -304,8 +293,6 @@ course_df.filter(col('num_lectures') > 15).select(col('course_title').alias('Cou
 # ###     7. List courses on the basis of level.
 
 #dfway
-from pyspark.sql.functions import collect_set
-
 window_spec = W.partitionBy('level')
 course_list_df = course_df\
                 .withColumn('Course List', collect_set('course_title').over(window_spec))\

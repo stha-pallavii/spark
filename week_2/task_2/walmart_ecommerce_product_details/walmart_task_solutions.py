@@ -7,8 +7,9 @@
 
 from pyspark.sql import SparkSession
 
-spark = SparkSession.builder.appName("walmart").getOrCreate()
-
+spark = SparkSession.builder.appName('walmart')\
+    .config('spark.driver.extraClassPath', '/usr/lib/jvm/java-11-openjdk-amd64/lib/postgresql-42.5.0.jar')\
+    .getOrCreate()
 
 # read the walmart_ecommerce_product_details.json file into a dataframe df
 
@@ -29,7 +30,12 @@ df_walmart = df_walmart.drop('_corrupt_record')
 
 df_walmart.printSchema()
 
-
+###
+df_walmart\
+    .write\
+    .mode('overwrite')\
+    .jdbc("jdbc:postgresql:spark", "public.walmart",
+        properties={"user": "postgres", "password": ""})
 
 # Clean the data: assign appropriate data types of Columns and rename columns to remove spaces
 #all columns have data type string. So, we need to convert the datatypes using cast method
