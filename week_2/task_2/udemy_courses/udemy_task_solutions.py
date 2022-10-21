@@ -107,13 +107,15 @@ top_3_best_courses = best_free_courses_df\
                             .drop('rn')
 
 # subjects and their three best courses along with Number of Reviews
-top_3_best_courses\
+top_3_best_courses_subject = top_3_best_courses\
     .withColumn('Best Free Courses', collect_list('course_title').over(W.partitionBy('subject')))\
     .select('subject', 'Best Free Courses', 'Number of Reviews')\
     .distinct()\
-    .dropna()\
-    .show()
+    .dropna()
 
+top_3_best_courses_subject.show()
+
+top_3_best_courses_subject.toPandas().to_csv('udemy_output_csv/1.Best_free_courses_by_subject.csv',index= False)
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -143,6 +145,7 @@ popular_courses_df = course_df.select(col('course_title').alias("Course_Titles")
 
 popular_courses_df.show(10) 
 
+popular_courses_df.toPandas().to_csv('udemy_output_csv/2.Most_popular_courses.csv',index= False)
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -182,6 +185,8 @@ average_data.show()
 business_finance_df = course_df.filter(col('subject')=='Business Finance')
 business_finance_df.show(5)
 
+business_finance_df.toPandas().to_csv('udemy_output_csv/3.a.Courses_specialized_to_Business_Finance.csv',index= False)
+
 
 #step2. get list of courses in the subject "Business Finance"
 
@@ -191,8 +196,11 @@ courses_business_finance.show(10)
 
 #step3. calculating average values for the subject
 
-business_finance_df.agg({'num_lectures': 'mean', 'num_subscribers' : 'mean', 'num_reviews': 'mean',\
-                         'price': 'mean'}).show()
+business_finance_data = business_finance_df.agg({'num_lectures': 'mean', 'num_subscribers' : 'mean', 'num_reviews': 'mean',\
+                         'price': 'mean'})
+business_finance_data.show()
+
+business_finance_data.toPandas().to_csv('udemy_output_csv/3.b.Average_data_Business_Finance.csv',index= False)
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------
@@ -220,7 +228,6 @@ titles_subjects_df = course_df.select(col('subject'), col('course_title'))\
                               .show()
 
 
-
 #dfway 2
 window_spec = W.partitionBy('subject')
 course_relation_df = course_df\
@@ -230,6 +237,7 @@ course_relation_df = course_df\
 
 course_relation_df.show()
 
+course_relation_df.toPandas().to_csv('udemy_output_csv/4.Courses_by_Subject.csv',index= False)
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -243,6 +251,8 @@ best_cost_benefit_courses=course_df.filter(f.col("num_subscribers")>50000)\
                                    .filter(f.col("price")<500)
 
 best_cost_benefit_courses.show()
+
+best_cost_benefit_courses.toPandas().to_csv('udemy_output_csv/5.a.Courses_Best_Cost_Benefit.csv',index= False)
 
 
 #Assumption 2: longest yet cheapest course = best cost benefit 
@@ -258,8 +268,14 @@ more_duration_less_price_courses.show(10)
 
 
 
+
+
 #dfway
-course_df.orderBy(desc('content_duration'), asc('price')).select('course_title', 'content_duration', 'price').show()
+more_duration_less_price_courses_df = course_df.orderBy(desc('content_duration'), asc('price')).select('course_title', 'content_duration', 'price')
+
+more_duration_less_price_courses_df.show()
+more_duration_less_price_courses_df.toPandas().to_csv('udemy_output_csv/5.b.Courses_Best_Cost_Benefit.csv', index=False)
+
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -281,10 +297,13 @@ courses_morethan15.show(10)
 
 #dfway
 
-course_df.filter(col('num_lectures') > 15).select(col('course_title').alias('Course'),\
+courses_morethan15_df = course_df.filter(col('num_lectures') > 15).select(col('course_title').alias('Course'),\
                                                   col('num_lectures').alias('Number of Lectures'))\
-         .orderBy(col('num_lectures'))\
-         .show(10)
+         .orderBy(col('num_lectures'))
+
+courses_morethan15_df.show(10)
+
+courses_morethan15_df.toPandas().to_csv('udemy_output_csv/6.Courses_with_more_than_15_Lectures.csv', index=False)
 
 
 # ---------------------------------------------------------------------------------------------------------------------------------
@@ -301,6 +320,7 @@ course_list_df = course_df\
 
 course_list_df.show()
 
+course_list_df.toPandas().to_csv('udemy_output_csv/7.Courses_on_the_basis_of_Level.csv', index=False)
 
 # ---------------------------------------------------------------------------------------------------------------------------------
 
@@ -319,5 +339,9 @@ courses_duration.show()
 
 
 #dfway
-course_df.filter(col('content_duration') > 2.0).select('course_id', 'course_title', 'content_duration')\
-         .distinct().orderBy(col('content_duration')).show()
+courses_duration_df = course_df.filter(col('content_duration') > 2.0).select('course_id', 'course_title', 'content_duration')\
+         .distinct().orderBy(col('content_duration'))
+
+courses_duration_df.show()
+
+courses_duration_df.toPandas().to_csv('udemy_output_csv/8.Courses_duration_greater_than_2_hours.csv', index=False)

@@ -128,7 +128,11 @@ import pyspark.sql.types as t
 windowSpec=Window.partitionBy("Brand")
 
 brand_products=df_product.withColumn("Products",f.collect_list(f.col("Product_Name")).over(windowSpec))
-brand_products.select('Brand', 'Product_Name').show()
+question1 = brand_products.select('Brand', 'Product_Name')
+
+question1.show()
+question1.toPandas().to_csv('walmart_output_csv/1.Brand_with_Products.csv', index=False)
+
 
 
 
@@ -150,7 +154,11 @@ product_names_df = df_product.filter(col('List_Price') > col('Sale_Price')).sele
 .alias("Product Names"), col('List_Price').alias("List Price"), col('Sale_Price')\
 .alias("Sale Price"),\
 (col('List_Price')-col('Sale_Price')).alias('Difference in Price'))
+
 product_names_df.show()
+
+product_names_df.toPandas().to_csv('walmart_output_csv/2.Products_ListPrice_greaterthan_SalePrice.csv', index=False)
+
 
 
 
@@ -168,10 +176,12 @@ number_of_products = spark.sql("""
 number_of_products.show()
 
 
+
+
 #dfway
 
-product_names_df.count()
-
+number_of_products_df = product_names_df.count()
+number_of_products_df
 
 
 # ###       4. List all the products belong to a “women” category.
@@ -189,8 +199,12 @@ women_products.show()
 
 #dfway
 
-df_product.where(col('Category').contains('Women') | col('Category').contains('women'))\
-.select('Product_Name', 'Category').distinct().show()             
+women_products_df = df_product.where(col('Category').contains('Women') | col('Category').contains('women'))\
+                              .select('Product_Name', 'Category').distinct()
+
+women_products_df.show()
+
+women_products_df.toPandas().to_csv('walmart_output_csv/4.Products_of_Category_Women.csv', index=False)
 
 
 
@@ -207,10 +221,14 @@ unavailable_products.show()
 
 
 #dfway
-df_product.filter(df_product['Available'] == 'False').show()
+unavailable_products_df = df_product.filter(df_product['Available'] == 'False')
+unavailable_products_df.show()
+
+unavailable_products_df.toPandas().to_csv('walmart_output_csv/5.Products_Not_Available.csv', index=False)
 
 # df way
 df_product.select(["Product_Name", "Available"]).where(df_product.Available == "FALSE").show()
+
 
 
 
@@ -226,7 +244,11 @@ products_count.show()
 
 
 #dfway
-df_product.filter(df_product['Available']== True).count()
+available_products = df_product.filter(df_product['Available']== True)
+
+available_products.count()
+
+available_products.toPandas().to_csv('walmart_output_csv/6.Available_Products.csv', index=False)
 
 
 
@@ -244,8 +266,12 @@ products.count()
 
 
 #dfway
-df_product.where(col('Description').contains('Nylon') | col('Description').contains('nylon'))\
-.select('Product_Name', 'Description').distinct().show()
+products_nylon = df_product.where(col('Description').contains('Nylon') | col('Description').contains('nylon'))\
+                           .select('Product_Name', 'Description').distinct()
+products_nylon.show()
+
+products_nylon.toPandas().to_csv('walmart_output_csv/7.Products_made_of_Nylon.csv', index=False)
+
 
 #counting to make sure 
 df_product.where(col('Description').contains('Nylon') | col('Description').contains('nylon'))\
